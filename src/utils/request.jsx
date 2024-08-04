@@ -1,4 +1,6 @@
 import axios from "axios";
+import {getToken, removeToken} from "./token";
+import router from "../router";
 
 
 
@@ -7,7 +9,12 @@ const request = axios.create({
     timeout: 10000,
 });
 
+
 request.interceptors.request.use((config)=> {
+    const token = getToken();
+    if (token){
+        config.headers.Authorization = `Bearer ${token}`;
+    }
     return config
 }, (error)=> {
     return Promise.reject(error)
@@ -21,6 +28,12 @@ request.interceptors.response.use((response)=> {
 }, (error)=> {
     // 超出 2xx 范围的状态码都会触发该函数。
     // 对响应错误做点什么
+    console.log(error);
+    if (error.response && error.response.status === 401) {
+        removeToken();
+        router.navigate('/login');
+        window.location.reload();
+    }
     return Promise.reject(error)
 })
 
